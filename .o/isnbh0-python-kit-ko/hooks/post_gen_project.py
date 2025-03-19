@@ -59,7 +59,8 @@ def main():
 
     # run uv venv --python $(pyenv prefix {{cookiecutter.min_python}})
     subprocess.run(
-        f"uv venv --python $(pyenv prefix {min_python})", shell=True, check=True
+        # FIXME: need to make this more friendly when error
+        f"uv venv --python python{min_python}", shell=True, check=True
     )
     print(f"Using Python version specified in pyproject.toml: {min_python}")
 
