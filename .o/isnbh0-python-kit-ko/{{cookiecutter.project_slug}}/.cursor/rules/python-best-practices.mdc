@@ -1,0 +1,104 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+# Python Best Practices
+
+Guidelines for writing idiomatic and maintainable Python code in this project.
+
+<rule>
+name: "python-best-practices"
+description: "Guidelines for writing idiomatic and maintainable Python code"
+rules:
+  - "Use type hints for all function parameters and return types (Python 3.10+ syntax)"
+  - "Use built-in collection types directly (list, dict, etc.) instead of importing from typing"
+  - "Use dataclasses or Pydantic models for complex data structures"
+  - "Follow PEP 8 style guidelines for code formatting"
+  - "Use descriptive variable and function names in snake_case"
+  - "Use docstrings for all functions, classes, and modules"
+  - "Use f-strings for string formatting instead of .format() or %"
+  - "Handle exceptions with specific exception types"
+  - "Use context managers (with statements) for resource management"
+  - "Group imports by type with a blank line between groups"
+  - "Use absolute imports in preference to relative imports"
+  - "Use guard clauses to reduce nesting levels"
+examples:
+  - description: "Function with proper type hints"
+    correct: |
+      ```python
+      def calculate_total(items: list[dict[str, float]], tax_rate: float) -> float:
+          """Calculate the total price including tax.
+          
+          Args:
+              items: List of items where each item is a dict with 'price' key.
+              tax_rate: The tax rate as a decimal (e.g., 0.1 for 10%).
+              
+          Returns:
+              The total price including tax.
+          """
+          subtotal = sum(item["price"] for item in items)
+          return subtotal * (1 + tax_rate)
+      ```
+  - description: "Dataclass usage"
+    correct: |
+      ```python
+      from dataclasses import dataclass
+      
+      @dataclass
+      class Product:
+          name: str
+          price: float
+          quantity: int = 0
+          
+          def total_cost(self) -> float:
+              return self.price * self.quantity
+      ```
+  - description: "Exception handling"
+    correct: |
+      ```python
+      def read_config_file(file_path: str) -> dict:
+          """Read and parse a configuration file.
+          
+          Args:
+              file_path: Path to the configuration file.
+              
+          Returns:
+              The parsed configuration as a dictionary.
+              
+          Raises:
+              FileNotFoundError: If the config file doesn't exist.
+              JSONDecodeError: If the file contains invalid JSON.
+          """
+          try:
+              with open(file_path, "r") as f:
+                  import json
+                  return json.load(f)
+          except FileNotFoundError:
+              logger.error(f"Configuration file not found: {file_path}")
+              raise
+          except json.JSONDecodeError as e:
+              logger.error(f"Invalid JSON in configuration file: {e}")
+              raise
+      ```
+  - description: "Import organization"
+    correct: |
+      ```python
+      # Standard library imports
+      import json
+      import os
+      from datetime import datetime
+      
+      # Third-party imports
+      import numpy as np
+      import pandas as pd
+      from fastapi import FastAPI
+      
+      # Local imports
+      from .models import User
+      from .utils import format_timestamp
+      ```
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

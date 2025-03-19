@@ -1,0 +1,136 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+# Python Documentation for Beginners (Korean)
+
+Guidelines for writing beginner-friendly Python code documentation in Korean.
+
+<rule>
+name: "python-beginner-ko"
+description: "Guidelines for writing comprehensive Korean documentation in Python code"
+rules:
+  - "Add extensive docstrings to each function or class, explaining what it does in Korean"
+  - "Structure complex function docstrings with numbered steps when appropriate"
+  - "Include worked-out examples in docstrings demonstrating usage"
+  - "Add Korean comments annotating each step in the implementation"
+  - "Reference docstring step numbers in implementation comments for consistency"
+  - "When modifying code, ensure comments and docstrings remain consistent with each other"
+  - "ALL comments and docstrings MUST be written in Korean"
+  - "Keep ALL code identifiers (class, function, variable names) in English"
+  - "Follow Korean technical writing conventions for clarity"
+  - "Use consistent terminology throughout the codebase"
+examples:
+  - description: "Function with numbered steps in docstring and corresponding comments"
+    correct: |
+      ```python
+      def calculate_compound_interest(principal: float, rate: float, time: int, compounds_per_year: int = 1) -> float:
+          """원금에 대한 복리 이자를 계산합니다.
+          
+          이 함수는 다음과 같은 단계로 복리 이자를 계산합니다:
+          1. 연간 복리 횟수에 따른 이율을 계산합니다.
+          2. 총 복리 적용 횟수를 계산합니다.
+          3. 복리 공식을 적용하여 최종 금액을 계산합니다.
+          4. 원금을 제외한 이자만 반환합니다.
+          
+          Args:
+              principal: 원금 (원화)
+              rate: 연이율 (예: 0.05는 5%를 의미)
+              time: 투자 기간 (년)
+              compounds_per_year: 연간 복리 횟수 (기본값: 1)
+              
+          Returns:
+              이자 금액 (원금 제외)
+              
+          예시:
+              >>> calculate_compound_interest(1000000, 0.05, 2, 12)
+              102500.0
+              # 100만원을 5% 이율로 2년간 매월 복리로 투자했을 때 이자
+          """
+          # 1. 연간 복리 횟수에 따른 이율 계산
+          rate_per_period = rate / compounds_per_year
+          
+          # 2. 총 복리 적용 횟수 계산
+          n_periods = compounds_per_year * time
+          
+          # 3. 복리 공식 적용하여 최종 금액 계산 (A = P(1 + r/n)^(nt))
+          final_amount = principal * (1 + rate_per_period) ** n_periods
+          
+          # 4. 원금을 제외한 이자만 반환
+          return final_amount - principal
+      ```
+  - description: "Class with comprehensive Korean documentation"
+    correct: |
+      ```python
+      from dataclasses import dataclass
+      from datetime import datetime, timedelta
+      
+      @dataclass
+      class Member:
+          """사용자 회원 정보를 관리하는 클래스입니다.
+          
+          이 클래스는 다음과 같은 기능을 제공합니다:
+          1. 회원 기본 정보 저장
+          2. 회원 상태 확인
+          3. 회원권 갱신 처리
+          
+          Attributes:
+              name: 회원 이름
+              email: 회원 이메일 주소
+              join_date: 회원 가입 일자
+              membership_expiry: 회원권 만료 일자
+              is_active: 회원 계정 활성화 여부
+          """
+          name: str
+          email: str
+          join_date: datetime
+          membership_expiry: datetime
+          is_active: bool = True
+          
+          def renew_membership(self, months: int) -> None:
+              """회원권을 지정된 개월 수만큼 갱신합니다.
+              
+              처리 단계:
+              1. 현재 만료일 확인
+              2. 만료일에 지정된 개월 수 추가
+              3. 회원권 상태 업데이트
+              
+              Args:
+                  months: 추가할 회원권 개월 수
+                  
+              예시:
+                  >>> hong = Member("홍길동", "hong@example.com", datetime.now(), datetime.now())
+                  >>> hong.renew_membership(6)  # 6개월 연장
+              """
+              # 1. 현재 만료일 확인 - 이미 만료된 경우 현재 날짜부터 시작
+              current_date = datetime.now()
+              start_date = max(self.membership_expiry, current_date)
+              
+              # 2. 만료일에 지정된 개월 수 추가
+              self.membership_expiry = start_date + timedelta(days=30 * months)
+              
+              # 3. 회원권 상태 업데이트 - 만료일이 미래면 활성화
+              self.is_active = self.membership_expiry > current_date
+          
+          def check_status(self) -> str:
+              """회원의 현재 상태를 확인하여 문자열로 반환합니다.
+              
+              Returns:
+                  회원 상태 메시지
+                  
+              예시:
+                  >>> hong.check_status()
+                  '활성 회원: 2023년 12월 31일까지'
+              """
+              if not self.is_active:
+                  return "비활성 회원"
+                  
+              # 만료일 형식 지정
+              expiry_formatted = self.membership_expiry.strftime("%Y년 %m월 %d일")
+              return f"활성 회원: {expiry_formatted}까지"
+      ```
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

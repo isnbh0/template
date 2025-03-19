@@ -1,0 +1,38 @@
+---
+description: Guidelines for presenting copyable text output to users
+globs: 
+alwaysApply: false
+---
+# Copyable Output Formatting
+
+Rule for ensuring consistent formatting of copyable text content in responses.
+
+<rule>
+name: "copyable-output"
+description: "Guidelines for presenting copyable text output to users"
+rules:
+  - "When presenting text that is meant to be copied (e.g., changelogs, code snippets, configuration files), always wrap the content in triple backticks (```)"
+  - "For code snippets, include the language identifier after the opening backticks for proper syntax highlighting (e.g., ```python, ```yaml)"
+  - "For large blocks of plain text (like changelogs or documentation), use ```markdown to preserve formatting"
+  - "When the content contains backticks itself, use four backticks (````) as delimiters to avoid formatting conflicts"
+  - "Place each copyable block on its own line with empty lines before and after for clarity"
+examples:
+  - description: "Code snippet example"
+    correct: |
+      ```python
+      def hello_world():
+          print("Hello, World!")
+      ```
+  - description: "Changelog example"
+    correct: |
+      ```markdown
+      # Changes
+      - Added feature X
+      - Fixed bug Y
+      ```
+  - description: "Content with backticks"
+    correct: |
+      ````
+      Here's some text with `inline code`
+      ````
+</rule>
