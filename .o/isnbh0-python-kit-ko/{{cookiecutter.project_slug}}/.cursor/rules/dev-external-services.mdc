@@ -1,0 +1,108 @@
+---
+description: Guidelines for integrating with external services and APIs
+globs: *.py
+alwaysApply: false
+---
+# External Service Integration Guidelines
+
+Guidelines for safely and effectively integrating with external services and APIs.
+
+<rule>
+name: "external-services-integration"
+description: "Guidelines for safely working with external services and APIs"
+rules:
+  - "Do NOT assume the specifications or interfaces of external APIs"
+  - "Work with the user to identify the exact API endpoint or SDK interface needed"
+  - "Ask for and verify necessary credentials before attempting integration"
+  - "Ensure secure storage of credentials in appropriate locations"
+  - "Follow proper error handling for API requests"
+  - "Use environment variables or config files for credentials, never hardcode"
+  - "Implement appropriate rate limiting and request throttling"
+  - "Handle API versioning explicitly in your implementation"
+  - "Document all external dependencies and their versions"
+  - "Implement proper logging for external service interactions"
+examples:
+  - description: "API Integration Process"
+    correct: |
+      1. First, determine the exact API endpoint or SDK interface:
+         - "Could you please specify which Notion API endpoint you want to use?"
+         - "Let's look at the Google Drive API documentation to find the exact method needed for this task."
+      
+      2. Request necessary credentials:
+         - "You'll need to create API credentials for this integration. For Notion, you'll need to:"
+           - "1. Go to https://www.notion.so/my-integrations"
+           - "2. Create a new integration and select the necessary permissions"
+           - "3. Copy the API token for us to use"
+         
+      3. Determine secure credential storage:
+         - "We should store these credentials securely. Let's check if we have a credentials directory:"
+         ```python
+         import os
+         
+         # Check if credentials directory exists, create if not
+         credentials_dir = os.path.join(os.path.dirname(__file__), "credentials")
+         if not os.path.exists(credentials_dir):
+             os.makedirs(credentials_dir)
+             print(f"Created credentials directory at {credentials_dir}")
+         
+         # Use a .env file or similar for storing credentials
+         ```
+      
+      4. Implement proper error handling:
+         ```python
+         import requests
+         from typing import dict, Any
+         
+         def call_external_api(endpoint: str, params: dict[str, Any]) -> dict:
+             """Call external API with proper error handling.
+             
+             Args:
+                 endpoint: The API endpoint URL
+                 params: Request parameters
+                 
+             Returns:
+                 The API response data
+                 
+             Raises:
+                 ConnectionError: If unable to connect to the API
+                 HTTPError: If the API returns an error status code
+             """
+             try:
+                 response = requests.get(endpoint, params=params)
+                 response.raise_for_status()  # Raise exception for 4XX/5XX responses
+                 return response.json()
+             except requests.ConnectionError:
+                 logger.error(f"Failed to connect to API at {endpoint}")
+                 raise
+             except requests.HTTPError as e:
+                 logger.error(f"API error: {e}")
+                 raise
+             except requests.Timeout:
+                 logger.error(f"API request timed out: {endpoint}")
+                 raise
+         ```
+  - description: "Secure Credential Management"
+    correct: |
+      ```python
+      import os
+      from dotenv import load_dotenv
+      
+      # Load credentials from .env file
+      load_dotenv(os.path.join(os.path.dirname(__file__), "credentials", ".env"))
+      
+      # Access credentials via environment variables
+      api_key = os.environ.get("NOTION_API_KEY")
+      if not api_key:
+          raise ValueError("NOTION_API_KEY not found in environment variables")
+      
+      # Use the API key in your requests
+      headers = {
+          "Authorization": f"Bearer {api_key}",
+          "Content-Type": "application/json",
+          "Notion-Version": "2022-06-28"  # Explicitly specify API version
+      }
+      ```
+metadata:
+  priority: high
+  version: 1.0
+</rule> 
