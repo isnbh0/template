@@ -1,0 +1,120 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Python Dependency Management with uv - Guide for LLM Agents
+
+**IMPORTANT**: This project uses `uv` for dependency management. Do NOT use `pip` or `requirements.txt` files.
+
+## Core Principles
+
+1. **Always check `pyproject.toml`** before performing any dependency operations
+2. **Use `uv` commands exclusively** - never `pip install` or `requirements.txt`
+3. **Respect dependency groups** defined in the project configuration
+4. **Use inline dependencies** for standalone scripts that don't import project code
+
+## Common Workflows
+
+### Adding Dependencies
+
+```bash
+# Add a production dependency
+uv add requests
+
+# Add to a specific dependency group
+uv add --group dev pytest
+uv add --group lint ruff
+
+# Add with version constraints
+uv add "fastapi>=0.100.0"
+```
+
+### Removing Dependencies
+
+```bash
+# Remove a dependency
+uv remove requests
+
+# Remove from a specific group
+uv remove --group dev pytest
+```
+
+### Installing/Syncing Dependencies
+
+```bash
+# Install all dependencies (including default groups)
+uv sync
+
+# Install only production dependencies
+uv sync --no-group dev --no-group lint
+
+# Install specific groups
+uv sync --group test --group docs
+```
+
+### Checking Project Configuration
+
+**Always check these first:**
+
+```bash
+# View dependency groups
+cat pyproject.toml | grep -A 10 "\[dependency-groups\]"
+
+# View default groups
+cat pyproject.toml | grep -A 5 "\[tool.uv\]"
+```
+
+### One-Shot Scripts (Standalone Scripts)
+
+For scripts that don't import any first-party project code, use inline dependencies:
+
+```python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "click",
+#     "requests",
+#     "rich",
+# ]
+# ///
+
+import click
+import requests
+from rich.console import Console
+
+@click.command()
+def main():
+    console = Console()
+    console.print("Hello, World!", style="bold green")
+
+if __name__ == "__main__":
+    main()
+```
+
+Run with: `uv run script.py`
+
+## What NOT to Do
+
+❌ `pip install package`  
+❌ `pip install -r requirements.txt`  
+❌ Creating `requirements.txt` files  
+❌ Using `pip freeze`  
+❌ Ignoring dependency groups in `pyproject.toml`
+
+## Quick Reference
+
+| Task | Command |
+|------|---------|
+| Add dependency | `uv add package` |
+| Add dev dependency | `uv add --group dev package` |
+| Remove dependency | `uv remove package` |
+| Install all deps | `uv sync` |
+| Run with deps | `uv run script.py` |
+| Check groups | `grep -A 10 "\[dependency-groups\]" pyproject.toml` |
+
+## Before Any Dependency Operation
+
+1. **Check `pyproject.toml`** for existing dependency groups
+2. **Identify the correct group** for the dependency (dev, test, lint, docs, etc.)
+3. **Use appropriate `uv` command** with correct group specification

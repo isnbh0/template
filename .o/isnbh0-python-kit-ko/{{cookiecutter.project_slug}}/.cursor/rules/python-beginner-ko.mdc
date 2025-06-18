@@ -27,7 +27,7 @@ examples:
       ```python
       def calculate_compound_interest(principal: float, rate: float, time: int, compounds_per_year: int = 1) -> float:
           """원금에 대한 복리 이자를 계산합니다.
-          
+
           이 함수는 다음과 같은 단계로 복리 이자를 계산합니다:
           1. 연간 복리 횟수에 따른 이율을 계산합니다.
           2. 총 복리 적용 횟수를 계산합니다.

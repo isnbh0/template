@@ -1,0 +1,126 @@
+name: Roadmap Task
+description: Complete a specific task in the ROADMAP.md file following clean architecture principles
+version: 1.0
+
+rules:
+  - git-workflow
+
+steps:
+  - name: Validate Task Specification
+    description: Verify that a specific task has been specified for completion
+    command: |
+      if [ -z "${1:-}" ]; then
+        echo "ERROR: No task specified. Please specify a task number or description."
+        exit 1
+      else
+        echo "Task specified: $1"
+        echo "Searching for matching task in ROADMAP.md..."
+        MATCHES=$(grep -n "^\- \[ \].*$1" ROADMAP.md || echo "")
+        COUNT=$(echo "$MATCHES" | grep -c "^\- \[ \]" || echo "0")
+
+        if [ -z "$MATCHES" ]; then
+          echo "ERROR: No matching tasks found for '$1'"
+          echo "Available incomplete tasks:"
+          grep -n "^\- \[ \]" ROADMAP.md | head -10
+          exit 1
+        elif [ "$COUNT" -gt 1 ]; then
+          echo "ERROR: Multiple matching tasks found for '$1'. Please be more specific:"
+          echo "$MATCHES"
+          exit 1
+        else
+          echo "✅ Found unique task to complete:"
+          echo "$MATCHES"
+        fi
+      fi
+
+  - name: Implement Code
+    description: Implement the code for the specified task following clean architecture principles
+    condition: $? -eq 0
+    command: |
+      echo "Implementing code for task: $1"
+      echo ""
+      echo "Guidelines:"
+      echo "- Refer to @clean-architecture-v2.md for code guidelines"
+      echo "- Pay meticulous attention to detail, and follow Python best practices"
+      echo "- When appropriate, prefer to conform to existing patterns"
+      echo "- Assume Python 3.12, so prefer to use 'list' and 'dict' etc in type hints"
+      echo "- Complete ALL sub-tasks if this is a parent task"
+      echo ""
+      echo "The implementation step will be performed by the AI agent."
+
+  - name: Run Unit Tests
+    description: Run the unit tests for the implemented functionality
+    condition: $? -eq 0
+    command: python -m pytest tests/unit/
+
+  - name: Run Integration Tests
+    description: Run the integration tests if applicable
+    condition: $? -eq 0
+    command: python -m pytest tests/integration/
+
+  - name: Mark Task as Complete
+    description: Update the ROADMAP.md file to mark the task as completed
+    condition: $? -eq 0
+    command: |
+      echo "Task implementation complete!"
+      echo ""
+      echo "To mark the task as complete, we need to update ROADMAP.md."
+      echo "The task pattern to search for: $1"
+
+      TASK_LINE=$(grep -n "^\- \[ \].*$1" ROADMAP.md | cut -d: -f1 | head -1)
+      if [ -n "$TASK_LINE" ]; then
+        echo "Found task at line $TASK_LINE. Marking as complete..."
+        sed -i "${TASK_LINE}s/- \\[ \\]/- \\[x\\]/" ROADMAP.md
+        echo "✅ Task marked as complete in ROADMAP.md"
+      else
+        echo "⚠️ Could not automatically find the exact task line."
+        echo "Please manually mark the task as complete in ROADMAP.md"
+      fi
+
+  - name: Commit Changes
+    description: Commit the completed task
+    condition: $? -eq 0
+    command: |
+      echo "Preparing to commit changes..."
+      echo ""
+      echo "Suggested commit command:"
+      echo "git add ."
+      echo "git commit -m \"Complete roadmap task: $1\""
+
+  - name: Report Completion
+    description: Report successful task completion
+    condition: $? -eq 0
+    action: report
+    message: |
+      ✅ Roadmap task implementation workflow completed successfully!
+
+      The specified task "$1" has been implemented and tests have passed.
+
+      Next steps:
+      1. Review your code changes
+      2. Verify the task was properly marked as complete in ROADMAP.md
+      3. Commit and push your changes
+
+  - name: Report Task Specification Error
+    description: Report error if task specification is invalid
+    condition: $? -eq 1
+    action: report
+    message: |
+      ❌ Task specification error
+
+      The recipe cannot proceed because:
+      - No task was specified, or
+      - No matching task was found, or
+      - Multiple matching tasks were found
+
+      Please invoke the recipe with a specific task number or unique description:
+      @roadmap-task "implement user settings storage"
+
+  - name: Report Test Failure
+    description: Report if tests failed
+    condition: $? -ne 0 && $? -ne 1
+    action: report
+    message: |
+      ❌ Tests failed for the implemented task.
+
+      Please fix the issues and run the tests again before marking the task as complete.

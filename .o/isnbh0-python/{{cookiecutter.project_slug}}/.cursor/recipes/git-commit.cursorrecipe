@@ -1,0 +1,39 @@
+name: Git Commit
+description: Check git staged files and make a git commit following workflow rules
+version: 1.0
+
+rules:
+  - git-workflow
+
+steps:
+  - name: Stash Unstaged Changes
+    description: Temporarily stash any unstaged changes to keep them separate
+    command: git stash push --keep-index --include-untracked
+
+  - name: Check Staged Files
+    description: View staged files and their contents
+    command: git --no-pager diff --staged
+
+  - name: Commit Changes
+    description: Commit staged changes following the git-workflow rules
+    command: git commit
+
+  - name: Handle Pre-commit Changes
+    description: If pre-commit hooks modify files, stage only those files and commit them
+    condition: $? -ne 0 && git diff --name-only | grep -q .
+    command: |
+      # Stage only files that were modified by pre-commit hooks
+      git add -u && git commit -m "${1:-Fix files modified by pre-commit hooks}"
+
+  - name: Report Errors
+    description: Report non-autofixable pre-commit errors to the user
+    condition: $? -ne 0
+    action: report
+    message: |
+      Pre-commit hooks reported non-autofixable errors.
+      Please fix the issues manually and try committing again.
+
+  - name: Restore Unstaged Changes
+    description: Restore any previously stashed changes
+    condition: true
+    command: git stash pop || true

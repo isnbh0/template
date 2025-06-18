@@ -1,0 +1,146 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# GitHub PR Creation Guidelines
+
+This document defines the process and standards for creating GitHub Pull Requests.
+
+1. PR Preparation
+   1.1. Review Changes
+        - Examine the diff between your branch and the target branch
+        - Use `git --no-pager diff main..HEAD --name-status` to view changed files
+        - Use `git --no-pager log --no-merges main..HEAD` to review commit history
+        - Ensure all necessary changes are committed and pushed
+
+   1.2. Branch Management
+        - Push all local commits to your remote branch
+        - Ensure your branch is up to date with the target branch
+        - Resolve any merge conflicts locally before creating a PR
+
+2. PR Content Standards
+   2.1. Title Format
+        - Follow the Conventional Commits format: `<type>(<scope>): <description>`
+        - Use the same type categories as in commit messages (feat, fix, docs, etc.)
+        - Derive scope from the main component or directory being changed
+        - Keep descriptions concise, clear, and in imperative mood
+
+   2.2. Description Structure
+        - Include a high-level summary of changes
+        - List specific changes in bullet points
+        - Provide technical details when appropriate
+        - Reference related issues with "Fixes #123" or "Resolves #123" syntax
+        - Include co-authorship attribution when applicable
+
+   2.3. Description Sections
+        - **Description**: Brief overview of what the PR does and why
+        - **Changes**: List of specific changes made
+        - **Technical Details**: Implementation details, design decisions, etc.
+        - **Testing**: Description of how changes were tested
+        - **Dependencies**: Any new dependencies introduced
+        - **Screenshots/Videos**: For UI changes (if applicable)
+
+3. PR Creation Process
+   3.1. Using GitHub CLI
+        ```bash
+        # Create PR with title and description from file
+        GH_PAGER= gh pr create --title "<conventional-commit-format-title>" --body-file <description-file> --base <target-branch>
+
+        # Alternative: Create PR with title and body directly (for simpler PRs)
+        GH_PAGER= gh pr create --title "<title>" --body "<body>" --base <target-branch>
+
+        # Update an existing PR
+        GH_PAGER= gh pr edit <pr-number> --title "<title>" --body-file <description-file>
+        ```
+
+        Note: Always use `GH_PAGER=` prefix with gh commands to prevent the pager from being triggered, which can interrupt command execution.
+
+   3.2. Clean Up
+        - Remove any temporary files created during PR preparation
+        - Example: `rm pr_description.md`
+
+<rule>
+name: github_pr_creation
+description: Guidelines for creating GitHub pull requests with structured format and content
+filters:
+  - type: event
+    pattern: "pr_creation"
+  - type: file_change
+    pattern: "*"
+
+actions:
+  - type: suggest
+    message: |
+      When creating a GitHub PR, please:
+      1. Use conventional commits format for PR title: `<type>(<scope>): <description>`
+      2. Include structured description with these sections:
+         - Description: Brief overview of changes
+         - Changes: Bullet list of specific changes
+         - Technical Details: Implementation notes when relevant
+      3. Reference related issues with "Fixes #123" or "Resolves #123"
+      4. Include co-authorship attribution when applicable
+      5. Clean up any temporary files after PR creation
+      6. Always use the `--no-pager` option when running git commands
+      7. Always prefix GitHub CLI commands with `GH_PAGER=` to prevent pager issues (e.g., `GH_PAGER= gh pr create ...`)
+
+examples:
+  - input: |
+      # Creating PR for a new feature
+      BRANCH_NAME="feature/user-authentication"
+      TARGET_BRANCH="main"
+      CHANGES="Implement user login and registration forms"
+    output: |
+      # Review changes
+      git --no-pager diff main..HEAD --name-status
+      git --no-pager log --no-merges main..HEAD --pretty=format:"%h %s"
+
+      # Create PR description file
+      echo "## Description
+      This PR implements user authentication features.
+
+      ### Changes
+      - Add login form component
+      - Create registration page
+      - Implement JWT validation
+      - Add user authentication tests
+
+      ### Technical Details
+      - Uses JWT for stateless authentication
+      - Implements password hashing with bcrypt
+      - Adds localStorage for session management
+
+      Resolves #456
+
+      Co-authored-by: [CONTRIBUTOR_NAME]" > pr_description.md
+
+      # Create PR
+      GH_PAGER= gh pr create --title "feat(auth): implement user authentication" --body-file pr_description.md --base main
+
+      # Clean up
+      rm pr_description.md
+
+  - input: |
+      # Creating PR for a bug fix
+      BRANCH_NAME="fix/date-parsing"
+      TARGET_BRANCH="main"
+      CHANGES="Fix incorrect date parsing in reports"
+    output: |
+      # Review changes
+      git --no-pager diff main..HEAD --name-status
+
+      # Create PR
+      GH_PAGER= gh pr create --title "fix(reports): resolve date parsing errors" --body "## Description
+      Fixes a bug in date parsing that was causing incorrect report data.
+
+      ### Changes
+      - Update date parsing logic in reports module
+      - Add test cases for different date formats
+      - Fix related timezone handling issues
+
+      Fixes #789" --base main
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>

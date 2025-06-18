@@ -1,0 +1,24 @@
+[project]
+name = "{{cookiecutter.project_slug}}"
+version = "0.1.0"
+description = "{{cookiecutter.project_short_description}}"
+authors = [
+    {name = "{{cookiecutter.author_name}}", email = "{{cookiecutter.author_email}}"},
+]
+requires-python = ">={{cookiecutter.min_python}}"
+dependencies = []
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.uv]
+default-groups = ["dev", "lint"]
+
+[dependency-groups]
+dev = ["pytest"]
+lint = ["ruff"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint.isort]
+known-first-party = ["{{cookiecutter.package_name}}"]

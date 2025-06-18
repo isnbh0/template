@@ -1,0 +1,184 @@
+---
+description: Guidelines for interpreting and executing Cursor recipes
+globs: *.cursorrecipe
+alwaysApply: false
+---
+
+# Cursor Recipe Execution Guidelines
+
+This document provides instructions for agents on how to interpret and execute Cursor recipes.
+
+1. Recipe File Overview
+   1.1. Purpose and Structure
+        - Cursor recipes are automation workflows defined in YAML format with the `.cursorrecipe` extension
+        - Recipes contain sequential steps to be executed in order with specified conditions
+        - Recipes reference rules that provide additional context and guidance for execution
+        - The agent's role is to interpret and execute these recipes according to their specifications
+
+   1.2. User Invocation Patterns
+        - When a user message contains only a reference to a recipe (e.g., "@recipe-name" or just "recipe-name"),
+          interpret this as a direct instruction to execute that recipe
+        - No additional confirmation is needed - the mention of the recipe name is the execution command
+        - Immediately locate and execute the referenced recipe following the guidelines in this document
+        - If the recipe requires parameters, prompt the user only if they haven't provided them
+
+   1.3. Important Execution Clarification
+        - "Executing" a recipe does NOT mean running the recipe file directly with bash or any other shell
+        - Instead, it means parsing the YAML content of the recipe file and interpreting each step
+        - Agents should use their understanding of the recipe's structure to determine the appropriate commands to run
+        - Execute each command specified in the recipe steps individually, respecting conditions and flow control
+        - Avoid simply passing the entire recipe file to a shell interpreter, which would treat YAML syntax as commands
+
+2. Reading Recipe Files
+   2.1. Parsing the File
+        - Extract the metadata (`name`, `description`, `version`) to understand the recipe's purpose
+        - Identify the `rules` array to determine which guidance rules apply during execution
+        - Parse the `steps` array to determine the sequence of operations to perform
+
+   2.2. Rules Integration
+        - ***CRITICALLY IMPORTANT***: The agent MUST EXPLICITLY STATE which rules it has identified in the recipe
+        - ***CRITICALLY IMPORTANT***: The agent MUST VERBALLY CONFIRM that it will check the contents of each rule
+        - For each rule listed in the `rules` array, load and apply its guidance
+        - Rules provide constraints, formatting requirements, and best practices
+        - The agent should adhere to all referenced rules when executing the recipe
+        - ***CRITICALLY IMPORTANT***: Before proceeding with execution, the agent MUST EXPLICITLY STATE which rules it will follow
+
+3. Executing Recipe Steps
+   3.1. Step Processing
+        - Process each step in sequential order from top to bottom
+        - For each step, extract the `name`, `description`, and `command` fields
+        - Use the `name` and `description` to understand the step's purpose
+        - Execute the specified `command` unless conditions prevent it
+        - Commands should be executed in the appropriate environment (terminal, shell, etc.), not interpreted as YAML
+
+   3.2. Conditional Execution
+        - If a step has a `condition` field, evaluate it before executing the command
+        - Conditions often refer to the exit code of the previous command (`$?`)
+        - Common conditions include:
+          - `$? -eq 0`: Execute only if the previous command succeeded
+          - `$? -ne 0`: Execute only if the previous command failed
+          - Combined conditions using `&&` and `||` operators
+        - Skip steps whose conditions evaluate to false
+
+   3.3. Special Actions
+        - If a step has an `action` field, perform that action instead of executing a command
+        - The `action: report` directive displays the step's `message` to the user
+        - Reports are typically used for error conditions or user guidance
+        - Multi-line messages (using `|` syntax) should be displayed with proper formatting
+
+4. Flow Control and Error Handling
+   4.1. Success Path
+        - Continue normal execution when commands succeed (exit code 0)
+        - Follow conditional branching based on success conditions
+
+   4.2. Error Handling
+        - When a command fails, evaluate error handling steps with conditions like `$? -ne 0`
+        - Display error messages through `action: report` steps
+        - Do not continue with steps that require previous successful execution
+
+   4.3. Special Cases
+        - Some recipes handle specific error conditions like pre-commit hook failures
+        - Follow the recipe's built-in error handling steps when provided
+        - If no explicit error handling exists, report failures to the user
+
+<rule>
+name: recipe_execution
+description: Guidelines for agents interpreting and executing Cursor recipes
+filters:
+  - type: file_extension
+    pattern: "\\.cursorrecipe$"
+  - type: event
+    pattern: "file_access|file_read"
+
+actions:
+
+- type: suggest
+    message: |
+      When executing a Cursor recipe:
+
+      1. If a user's message contains only a recipe name (e.g., "@recipe-name" or "recipe-name"):
+         - Interpret this as a direct command to execute the recipe
+         - No confirmation is needed before execution
+         - Find and execute the recipe immediately
+
+      2. Review the entire recipe before starting execution
+         - Understand all steps and their relationships
+         - ***CRITICALLY IMPORTANT***: EXPLICITLY IDENTIFY which rules are referenced in the recipe
+         - ***CRITICALLY IMPORTANT***: EXPLICITLY STATE that you will check the contents of these rules
+         - Identify error handling pathways
+
+      3. Load all rules referenced in the recipe's `rules` array
+         - ***CRITICALLY IMPORTANT***: EXPLICITLY STATE which rules you will be following
+         - Apply these rules throughout the execution process
+         - Rules provide important context and requirements
+
+      4. Execute steps sequentially unless conditions direct otherwise
+         - Each step should be executed in order
+         - Respect conditional execution based on previous results
+         - Use `$?` to check previous command's exit status
+         - IMPORTANT: Properly parse each command from the YAML and execute it in the appropriate environment,
+           do not run the recipe file directly as a shell script
+
+      5. For error conditions:
+         - Follow the recipe's error handling steps
+         - Report meaningful error messages to the user
+         - Do not proceed with steps that depend on failed prerequisites
+
+examples:
+
+- input: |
+      # User sends just a recipe reference
+      @git-commit
+    output: |
+      I've identified that I need to execute the git-commit recipe.
+
+      This recipe requires following the "git-workflow" rule. I will check the contents of this rule to ensure proper execution.
+
+      After reviewing the git-workflow rule, I'll be following these guidelines during execution:
+      [Brief summary of relevant guidelines from the rule]
+
+      Now proceeding with execution:
+      1. Locate .cursor/recipes/git-commit.cursorrecipe
+      2. Parse the YAML content to understand each step
+      3. Begin executing each step's command individually without asking for confirmation
+
+- input: |
+      # Reading a git-commit recipe
+      name: Git Commit
+      description: Check git staged files and make a git commit
+      version: 1.0
+
+      rules:
+        - git-workflow
+
+      steps:
+        - name: Check Staged Files
+          description: View staged files and their contents
+          command: git --no-pager diff --staged
+
+        - name: Commit Changes
+          description: Commit staged changes
+          command: git commit
+
+        - name: Handle Pre-commit Changes
+          description: If pre-commit hooks modify files, commit them again
+          condition: $? -ne 0 && git diff --quiet --exit-code
+          command: git commit -am "Fix files modified by pre-commit hooks"
+    output: |
+      I've identified that this recipe requires following the "git-workflow" rule. I will check the contents of this rule to ensure proper execution.
+
+      After reviewing the git-workflow rule, I'll be following these guidelines during execution:
+      [Brief summary of relevant guidelines from the rule]
+
+      Now proceeding with execution:
+      1. Parse the YAML and extract each step's command
+      2. Execute git --no-pager diff --staged to check what's staged
+      3. Execute git commit to commit the changes
+      4. If git commit failed ($? -ne 0) and there are changes to tracked files:
+         - Run git commit -am "Fix files modified by pre-commit hooks"
+      6. Report any persisting errors to the user
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>
